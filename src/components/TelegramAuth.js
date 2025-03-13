@@ -8,62 +8,25 @@ const TelegramAuth = () => {
     const [isReady, setIsReady] = useState(false);
     const [initDataStatus, setInitDataStatus] = useState(null);
 
-    // Initialize Telegram Web App with proper error handling
-    const initializeTelegram = useCallback(() => {
-        try {
-            // Wait for Telegram Web App to be available
-            while (!window.Telegram) {
-                console.log('Waiting for Telegram Web App...');
-                setTimeout(() => {}, 100);
-            }
-
-            // Initialize the app
-            window.Telegram.WebApp.ready();
-
-            // Set up event listeners
-            window.Telegram.WebApp.onEvent('mainButtonClicked', onAuthenticate);
-            window.Telegram.WebApp.onEvent('themeChanged', onThemeChange);
-            window.Telegram.WebApp.onEvent('viewportChanged', onViewportChange);
-
-            // Get initial theme
-            const theme = window.Telegram.WebApp.theme;
-            onThemeChange(theme);
-
-            // Check initialization data availability
-            checkInitData();
-
-            setIsReady(true);
-        } catch (err) {
-            setError('Failed to initialize Telegram Web App: ' + err.message);
-            console.error('Initialization error:', err);
+    // Event handlers
+    const onThemeChange = useCallback((theme) => {
+        if (theme === 'light') {
+            document.body.classList.remove('dark-theme');
+        } else {
+            document.body.classList.add('dark-theme');
         }
     }, []);
 
-    // Check initialization data
-    const checkInitData = useCallback(() => {
-        try {
-            const initData = window.Telegram.WebApp.initData;
-            const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
-
-            if (!initData) {
-                throw new Error('No initialization data available');
-            }
-
-            setInitDataStatus({
-                hasInitData: true,
-                initDataLength: initData.length,
-                isExpanded: window.Telegram.WebApp.isExpanded,
-                isActive: window.Telegram.WebApp.isActive
-            });
-        } catch (err) {
-            setInitDataStatus({
-                hasInitData: false,
-                error: err.message
-            });
+    const onViewportChange = useCallback((params) => {
+        if (params.isStateStable) {
+            const viewportHeight = params.height;
+            document.documentElement.style.setProperty(
+                '--tg-viewport-height',
+                `${viewportHeight}px`
+            );
         }
     }, []);
 
-    // Authentication handler
     const onAuthenticate = useCallback(async () => {
         try {
             if (!isReady) {
@@ -105,6 +68,61 @@ const TelegramAuth = () => {
             console.error('Authentication error:', err);
         }
     }, [isReady]);
+
+    // Initialize Telegram Web App with proper error handling
+    const initializeTelegram = useCallback(() => {
+        try {
+            // Wait for Telegram Web App to be available
+            while (!window.Telegram) {
+                console.log('Waiting for Telegram Web App...');
+                setTimeout(() => {}, 100);
+            }
+
+            // Initialize the app
+            window.Telegram.WebApp.ready();
+
+            // Set up event listeners
+            window.Telegram.WebApp.onEvent('mainButtonClicked', onAuthenticate);
+            window.Telegram.WebApp.onEvent('themeChanged', onThemeChange);
+            window.Telegram.WebApp.onEvent('viewportChanged', onViewportChange);
+
+            // Get initial theme
+            const theme = window.Telegram.WebApp.theme;
+            onThemeChange(theme);
+
+            // Check initialization data availability
+            checkInitData();
+
+            setIsReady(true);
+        } catch (err) {
+            setError('Failed to initialize Telegram Web App: ' + err.message);
+            console.error('Initialization error:', err);
+        }
+    }, [onAuthenticate, onThemeChange, onViewportChange]);
+
+    // Check initialization data
+    const checkInitData = useCallback(() => {
+        try {
+            const initData = window.Telegram.WebApp.initData;
+            const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
+
+            if (!initData) {
+                throw new Error('No initialization data available');
+            }
+
+            setInitDataStatus({
+                hasInitData: true,
+                initDataLength: initData.length,
+                isExpanded: window.Telegram.WebApp.isExpanded,
+                isActive: window.Telegram.WebApp.isActive
+            });
+        } catch (err) {
+            setInitDataStatus({
+                hasInitData: false,
+                error: err.message
+            });
+        }
+    }, []);
 
     // Cleanup function
     const cleanup = useCallback(() => {
