@@ -1,36 +1,45 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import Home from './pages/Home';
-// import Auth from './pages/Auth';
-// import Profile from './components/Profile';
-import TelegramAuth from './components/TelegramAuth';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 function App() {
-  // useEffect(() => {
-  //   const tg = window.Telegram.WebApp;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  //   // Expand the Mini App to full screen
-  //   tg.expand();
+  useEffect(() => {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+  }, []);
 
-  //   // Log user data
-  //   const user = tg.initDataUnsafe.user;
-  //   console.log('User:', user);
+  const handleLogin = async () => {
+    const tg = window.Telegram.WebApp;
+    const initData = tg.initData;
 
-  //   // Handle theme changes (optional)
-  //   tg.onEvent('themeChanged', () => {
-  //     console.log('Theme changed:', tg.colorScheme);
-  //   });
-  // }, []);
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth`, { initData });
+      if (response.data.success) {
+        setIsAuthenticated(true);
+        alert('Login successful!');
+        // Proceed to the main app interface
+      } else {
+        alert('Login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Login error. Please try again.');
+    }
+  };
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<TelegramAuth />} />
-        {/* <Route path="/" element={<Home />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/profile" element={<Profile />} /> */}
-      </Routes>
-    </Router>
+    <div className="App">
+      <h1>Welcome to the Mini App</h1>
+      {!isAuthenticated ? (
+        <button onClick={handleLogin}>Login with Telegram</button>
+      ) : (
+        <div>
+          <h2>You are logged in!</h2>
+          {/* Main app interface goes here */}
+        </div>
+      )}
+    </div>
   );
 }
 
