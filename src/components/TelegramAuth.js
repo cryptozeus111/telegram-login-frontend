@@ -6,13 +6,15 @@ const TelegramAuth = () => {
     const [user, setUser] = useState(null);
     const [error, setError] = useState(null);
     const [isReady, setIsReady] = useState(false);
+    const [initDataStatus, setInitDataStatus] = useState(null);
 
     // Initialize Telegram Web App with proper error handling
-    const initializeTelegram = useCallback(async () => {
+    const initializeTelegram = useCallback(() => {
         try {
             // Wait for Telegram Web App to be available
             while (!window.Telegram) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+                console.log('Waiting for Telegram Web App...');
+                setTimeout(() => {}, 100);
             }
 
             // Initialize the app
@@ -27,6 +29,9 @@ const TelegramAuth = () => {
             const theme = window.Telegram.WebApp.theme;
             onThemeChange(theme);
 
+            // Check initialization data availability
+            checkInitData();
+
             setIsReady(true);
         } catch (err) {
             setError('Failed to initialize Telegram Web App: ' + err.message);
@@ -34,24 +39,27 @@ const TelegramAuth = () => {
         }
     }, []);
 
-    // Theme handling
-    const onThemeChange = useCallback((theme) => {
-        if (theme === 'light') {
-            document.body.classList.remove('dark-theme');
-        } else {
-            document.body.classList.add('dark-theme');
-        }
-    }, []);
+    // Check initialization data
+    const checkInitData = useCallback(() => {
+        try {
+            const initData = window.Telegram.WebApp.initData;
+            const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
 
-    // Viewport handling
-    const onViewportChange = useCallback((params) => {
-        if (params.isStateStable) {
-            // Handle stable viewport state
-            const viewportHeight = params.height;
-            document.documentElement.style.setProperty(
-                '--tg-viewport-height',
-                `${viewportHeight}px`
-            );
+            if (!initData) {
+                throw new Error('No initialization data available');
+            }
+
+            setInitDataStatus({
+                hasInitData: true,
+                initDataLength: initData.length,
+                isExpanded: window.Telegram.WebApp.isExpanded,
+                isActive: window.Telegram.WebApp.isActive
+            });
+        } catch (err) {
+            setInitDataStatus({
+                hasInitData: false,
+                error: err.message
+            });
         }
     }, []);
 
@@ -127,6 +135,21 @@ const TelegramAuth = () => {
                         Login with Telegram
                     </button>
                     {error && <div className="error-message">{error}</div>}
+                    {initDataStatus && (
+                        <div className="init-data-status">
+                            <h3>Initialization Data Status:</h3>
+                            {initDataStatus.hasInitData ? (
+                                <ul>
+                                    <li>Initialization data available</li>
+                                    <li>Data length: {initDataStatus.initDataLength}</li>
+                                    <li>App expanded: {initDataStatus.isExpanded ? 'Yes' : 'No'}</li>
+                                    <li>App active: {initDataStatus.isActive ? 'Yes' : 'No'}</li>
+                                </ul>
+                            ) : (
+                                <p>Error: {initDataStatus.error}</p>
+                            )}
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="user-profile">
