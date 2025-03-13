@@ -1,24 +1,34 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Auth from './pages/Auth';
+import Profile from './components/Profile';
 
 function App() {
+  useEffect(() => {
+    const tg = window.Telegram.WebApp;
+
+    // Expand the Mini App to full screen
+    tg.expand();
+
+    // Log user data
+    const user = tg.initDataUnsafe.user;
+    console.log('User:', user);
+
+    // Handle theme changes (optional)
+    tg.onEvent('themeChanged', () => {
+      console.log('Theme changed:', tg.colorScheme);
+    });
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </Router>
   );
 }
 
