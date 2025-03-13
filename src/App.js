@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import TelegramLogin from './components/TelegramLogin';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,8 +32,10 @@ function App() {
   return (
     <div className="App">
       <h1>Welcome to the Mini App</h1>
+      <TelegramLogin />
       {!isAuthenticated ? (
-        <button onClick={handleLogin}>Login with Telegram</button>
+        // <button onClick={handleLogin}>Login with Telegram</button>
+        <></>
       ) : (
         <div>
           <h2>You are logged in!</h2>
