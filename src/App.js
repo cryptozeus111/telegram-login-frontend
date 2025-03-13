@@ -1,25 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import TelegramLogin from './components/TelegramLogin';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-  }, []);
-
-  const handleLogin = async () => {
-    const tg = window.Telegram.WebApp;
-    const initData = tg.initData;
-
+  const handleAuthCallback = async (userData) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth`, { initData });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth`, { user: userData });
       if (response.data.success) {
-        setIsAuthenticated(true);
+        setUser(userData);
         alert('Login successful!');
-        // Proceed to the main app interface
       } else {
         alert('Login failed. Please try again.');
       }
@@ -32,13 +23,13 @@ function App() {
   return (
     <div className="App">
       <h1>Welcome to the Mini App</h1>
-      <TelegramLogin />
-      {!isAuthenticated ? (
-        // <button onClick={handleLogin}>Login with Telegram</button>
-        <></>
+      {!user ? (
+        <TelegramLogin onAuthCallback={handleAuthCallback} />
       ) : (
         <div>
-          <h2>You are logged in!</h2>
+          <h2>Welcome, {user.first_name}!</h2>
+          <p>Username: {user.username}</p>
+          <p>You are now logged in.</p>
           {/* Main app interface goes here */}
         </div>
       )}
