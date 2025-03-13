@@ -10,24 +10,34 @@ const TelegramAuth = () => {
         // Initialize Telegram Web App
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.onEvent('mainButtonClicked', onAuthenticate);
+        
+        // Cleanup event listener
+        return () => {
+            window.Telegram.WebApp.offEvent('mainButtonClicked', onAuthenticate);
+        };
     }, []);
 
     const onAuthenticate = async () => {
         try {
-            const initDataRaw = window.Telegram.WebApp.initDataRaw;
+            // Ensure initDataRaw is available
+            if (!window.Telegram.WebApp.initDataRaw) {
+                throw new Error('Telegram Web App not initialized');
+            }
+
             const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/telegram`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    initDataRaw,
+                    initDataRaw: window.Telegram.WebApp.initDataRaw,
                     isMocked: process.env.NODE_ENV === 'development'
                 })
             });
 
             if (!response.ok) {
-                throw new Error('Authentication failed');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Authentication failed');
             }
 
             const data = await response.json();
@@ -39,8 +49,9 @@ const TelegramAuth = () => {
                 name: data.user.name,
                 avatar: data.user.avatar_url
             });
+            setError(null);
         } catch (err) {
-            setError('Authentication failed. Please try again.');
+            setError(err.message);
             console.error('Authentication error:', err);
         }
     };
